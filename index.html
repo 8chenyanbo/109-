@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>109 線上成績記錄簿</title>
+  <style>
+    :root {
+      --orange: #FCA5A5;
+      --yellow: #FDE68A;
+      --coral: #FB7185;
+      --coffee: #6B4C3B;
+      --text: #374151;
+      --card-bg: rgba(255,255,255,0.75);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, var(--coral), var(--yellow));
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      backdrop-filter: blur(12px);
+      padding: 32px;
+      width: 320px;
+      text-align: center;
+    }
+
+    h1 {
+      color: var(--text);
+      font-size: 20px;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--coffee);
+      font-weight: 500;
+      text-align: left;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--orange);
+      border-radius: 12px;
+      font-size: 16px;
+      margin-bottom: 16px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--coral);
+    }
+
+    /* 管理員連結樣式 */
+    #admin-link {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      background: var(--orange);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 14px;
+      display: none; /* 預設隱藏 */
+    }
+
+    #admin-link:hover {
+      background: var(--coral);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>109 線上成績記錄簿</h1>
+    <label for="seat">座號</label>
+    <input type="text" id="seat" placeholder="請輸入座號" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- 管理員連結（預設隱藏） -->
+  <a id="admin-link" href="admin.html">管理員介面</a>
+
+  <script>
+    function login() {
+      const seat = document.getElementById('seat').value.trim();
+      const validSeats = [
+        ...Array.from({length: 15}, (_, i) => 114121 + i),
+        ...Array.from({length: 13}, (_, i) => 114291 + i)
+      ];
+      const isAdmin = seat === "114129";
+
+      if (validSeats.includes(Number(seat))) {
+        alert("登入成功！歡迎學生 " + seat);
+        window.location.href = "grades.html"; // 學生成績頁
+      } else if (isAdmin) {
+        alert("管理員登入成功！");
+        // 顯示左下角管理員連結
+        document.getElementById("admin-link").style.display = "inline-block";
+      } else {
+        alert("座號錯誤，請洽老師");
+      }
+    }
+  </script>
+</body>
+</html>
