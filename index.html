@@ -9,40 +9,29 @@
 <body>
   <div class="card">
     <h2>登入成績系統</h2>
-
-    <label for="seat-input">請輸入座號：</label>
-    <input type="text" id="seat-input" placeholder="例如：114129" />
-
+    <input type="text" id="seat-input" placeholder="請輸入座號，例如 114129" />
     <div style="margin-top:12px;">
       <button onclick="login()">查詢成績</button>
-      <button onclick="goAdmin()">進入管理員介面</button>
+      <button onclick="goAdmin()">管理員介面</button>
     </div>
-
     <p style="margin-top:16px;">目前登入座號：<span id="current-seat">--</span></p>
   </div>
 
   <script>
-    // 顯示目前座號
     document.getElementById("current-seat").textContent = localStorage.getItem("seat") || "--";
 
     function login() {
       const seat = document.getElementById("seat-input").value.trim();
-      if (!seat) {
-        alert("請輸入座號！");
-        return;
-      }
+      if (!seat) return alert("請輸入座號！");
       localStorage.setItem("seat", seat);
-      window.location.href = "./grades.html"; // 修正跳轉路徑
+      window.location.href = "./grades.html";
     }
 
     function goAdmin() {
       const seat = document.getElementById("seat-input").value.trim();
-      if (!seat) {
-        alert("請輸入座號！");
-        return;
-      }
+      if (!seat) return alert("請輸入座號！");
       localStorage.setItem("seat", seat);
-      window.location.href = "./admin.html"; // 修正跳轉路徑
+      window.location.href = "./admin.html";
     }
   </script>
 </body>
