@@ -4,196 +4,115 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>管理員介面</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root {
-      --orange: #FCA5A5;
-      --yellow: #FDE68A;
-      --coral: #FB7185;
-      --coffee: #6B4C3B;
-      --text: #374151;
-      --card-bg: rgba(255,255,255,0.85);
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(135deg, var(--coral), var(--yellow));
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-      backdrop-filter: blur(12px);
-      padding: 24px;
-      margin: 24px;
-      width: 90%;
-      max-width: 700px;
-    }
-
-    h2 {
-      color: var(--text);
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    select, input {
-      padding: 8px;
-      margin: 8px 0;
-      border-radius: 8px;
-      border: 1px solid var(--orange);
-      width: 100%;
-      font-size: 14px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 16px;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-      text-align: center;
-    }
-
-    th {
-      background-color: var(--orange);
-      color: white;
-    }
-
-    tr:hover {
-      background-color: #fef3c7;
-    }
-
-    .btn-group {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      background-color: var(--orange);
-      color: white;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    button:hover {
-      background-color: var(--coral);
-    }
-
-    canvas {
-      max-width: 100%;
-    }
-  </style>
+  <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
   <div class="card">
-    <h2>管理員模式：編輯成績</h2>
+    <h2>管理員介面</h2>
 
-    <label for="seat-select">選擇座號</label>
-    <select id="seat-select">
-      <option value="114121">114121</option>
-      <option value="114122">114122</option>
-      <option value="114123">114123</option>
-      <option value="114124">114124</option>
-      <option value="114125">114125</option>
-      <option value="114129">114129（管理員）</option>
-      <option value="114291">114291</option>
-      <option value="114292">114292</option>
-    </select>
-
-    <div class="btn-group">
-      <button onclick="addSubject()">新增科目</button>
-      <button onclick="exportCSV()">匯出 CSV</button>
-      <button onclick="exportPDF()">匯出 PDF</button>
-    </div>
-
-    <table id="admin-table">
+    <table id="grades-table">
       <thead>
         <tr>
+          <th>座號</th>
           <th>科目</th>
           <th>分數</th>
+          <th>操作</th>
         </tr>
       </thead>
-      <tbody>
-        <tr><td>國文</td><td><input type="number" value="85" /></td></tr>
-        <tr><td>英文</td><td><input type="number" value="78" /></td></tr>
-        <tr><td>數學</td><td><input type="number" value="92" /></td></tr>
-      </tbody>
+      <tbody></tbody>
     </table>
 
-    <p style="text-align:center; font-weight:500;">平均分：<span id="avg-score">--</span></p>
+    <div id="add-subject-section" style="margin-top:16px;">
+      <h3>新增科目</h3>
+      <input type="text" id="new-subject" placeholder="科目名稱" />
+      <button onclick="addSubject()">新增科目</button>
+    </div>
 
-    <canvas id="chart" height="200"></canvas>
+    <div id="assign-editor-section" style="margin-top:16px;">
+      <h3>指定編輯者</h3>
+      <input type="text" id="editor-seat" placeholder="座號" />
+      <button onclick="assignEditor()">指定編輯者</button>
+    </div>
   </div>
 
   <script>
-    function calculateAverage() {
-      const inputs = document.querySelectorAll("#admin-table tbody input");
-      let total = 0;
-      inputs.forEach(input => total += parseInt(input.value || 0));
-      const avg = Math.round(total / inputs.length);
-      document.getElementById("avg-score").textContent = avg;
-      return inputs.length ? avg : 0;
+    const seat = localStorage.getItem("seat");
+    let editors = JSON.parse(localStorage.getItem("editors") || "[]");
+    const isAdmin = (seat === "114129");
+    const isEditor = editors.includes(seat);
+
+    // 顯示角色提示
+    const roleBox = document.createElement("div");
+    roleBox.style.position = "fixed";
+    roleBox.style.bottom = "16px";
+    roleBox.style.right = "16px";
+    roleBox.style.background = "#FB7185";
+    roleBox.style.color = "white";
+    roleBox.style.padding = "6px 10px";
+    roleBox.style.borderRadius = "6px";
+    roleBox.textContent = isAdmin ? "目前權限：管理員" : 
+                          (isEditor ? "目前權限：編輯者" : "目前權限：查詢者");
+    document.body.appendChild(roleBox);
+
+    if (!isAdmin) {
+      document.getElementById("add-subject-section").style.display = "none";
+      document.getElementById("assign-editor-section").style.display = "none";
     }
 
-    function drawChart() {
-      const labels = Array.from(document.querySelectorAll("#admin-table tbody td:first-child")).map(td => td.textContent);
-      const scores = Array.from(document.querySelectorAll("#admin-table tbody input")).map(input => parseInt(input.value || 0));
-      new Chart(document.getElementById("chart").getContext("2d"), {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '分數',
-            data: scores,
-            backgroundColor: ['#FCA5A5','#FDE68A','#FB7185','#FDBA74','#FCD34D']
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, max: 100 } }
-        }
-      });
-    }
+    let grades = JSON.parse(localStorage.getItem("grades") || "{}");
+    const tbody = document.querySelector("#grades-table tbody");
 
-    function addSubject() {
-      const subject = prompt("請輸入新科目名稱");
-      if (subject) {
+    for (let sid in grades) {
+      for (let subject in grades[sid]) {
+        const score = grades[sid][subject];
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${subject}</td><td><input type="number" value="0" /></td>`;
-        document.querySelector("#admin-table tbody").appendChild(row);
-        calculateAverage();
-        drawChart();
+        row.innerHTML = `
+          <td>${sid}</td>
+          <td>${subject}</td>
+          <td><input type="number" value="${score}" ${(!isAdmin && !isEditor) ? "disabled" : ""}></td>
+          <td><button class="edit-btn" onclick="editGrade('${sid}','${subject}', this.parentElement.parentElement.querySelector('input').value)">更新</button></td>
+        `;
+        tbody.appendChild(row);
       }
     }
 
-    function exportCSV() {
-      alert("匯出 CSV 功能尚未啟用");
+    function editGrade(seatId, subject, newScore) {
+      if (!isAdmin && !isEditor) {
+        alert("您沒有編輯成績的權限！");
+        return;
+      }
+      grades[seatId][subject] = parseInt(newScore);
+      localStorage.setItem("grades", JSON.stringify(grades));
+      alert("成績已更新！");
     }
 
-    function exportPDF() {
-      alert("匯出 PDF 功能尚未啟用");
+    function addSubject() {
+      if (!isAdmin) {
+        alert("您沒有新增科目的權限！");
+        return;
+      }
+      const subjectName = document.getElementById("new-subject").value.trim();
+      if (!subjectName) return;
+      for (let sid in grades) {
+        grades[sid][subjectName] = 0;
+      }
+      localStorage.setItem("grades", JSON.stringify(grades));
+      alert("科目已新增！");
+      location.reload();
     }
 
-    // 初始載入
-    calculateAverage();
-    drawChart();
+    function assignEditor() {
+      if (!isAdmin) {
+        alert("您沒有指定編輯者的權限！");
+        return;
+      }
+      const editorSeat = document.getElementById("editor-seat").value.trim();
+      if (editorSeat && !editors.includes(editorSeat)) {
+        editors.push(editorSeat);
+        localStorage.setItem("editors", JSON.stringify(editors));
+        alert("已指定座號 " + editorSeat + " 為編輯者！");
+      }
+    }
   </script>
 </body>
 </html>
