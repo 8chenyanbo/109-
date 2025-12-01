@@ -3,165 +3,123 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>學生成績頁</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root {
-      --orange: #FCA5A5;
-      --yellow: #FDE68A;
-      --coral: #FB7185;
-      --coffee: #6B4C3B;
-      --text: #374151;
-      --card-bg: rgba(255,255,255,0.85);
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(135deg, var(--coral), var(--yellow));
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-      backdrop-filter: blur(12px);
-      padding: 24px;
-      margin: 24px;
-      width: 90%;
-      max-width: 600px;
-    }
-
-    h2 {
-      color: var(--text);
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 16px;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-      text-align: center;
-    }
-
-    th {
-      background-color: var(--orange);
-      color: white;
-    }
-
-    tr:hover {
-      background-color: #fef3c7;
-    }
-
-    .btn-group {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    button {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      background-color: var(--orange);
-      color: white;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    button:hover {
-      background-color: var(--coral);
-    }
-
-    canvas {
-      max-width: 100%;
-    }
-  </style>
+  <title>管理員介面</title>
+  <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
   <div class="card">
-    <h2>114121 的成績記錄</h2>
+    <h2>管理員介面</h2>
 
-    <div class="btn-group">
-      <button onclick="exportCSV()">匯出 CSV</button>
-      <button onclick="exportPDF()">匯出 PDF</button>
-    </div>
-
+    <!-- 成績表格 -->
     <table id="grades-table">
       <thead>
         <tr>
+          <th>座號</th>
           <th>科目</th>
           <th>分數</th>
+          <th>操作</th>
         </tr>
       </thead>
-      <tbody>
-        <tr><td>國文</td><td>85</td></tr>
-        <tr><td>英文</td><td>78</td></tr>
-        <tr><td>數學</td><td>92</td></tr>
-        <tr><td>自然</td><td>88</td></tr>
-        <tr><td>社會</td><td>81</td></tr>
-      </tbody>
+      <tbody></tbody>
     </table>
 
-    <p style="text-align:center; font-weight:500;">平均分：<span id="avg-score">--</span></p>
+    <!-- 新增科目區塊（只有管理員可見） -->
+    <div id="add-subject-section" style="margin-top:16px;">
+      <h3>新增科目</h3>
+      <input type="text" id="new-subject" placeholder="科目名稱" />
+      <button onclick="addSubject()">新增科目</button>
+    </div>
 
-    <canvas id="chart" height="200"></canvas>
+    <!-- 指定編輯者區塊（只有管理員可見） -->
+    <div id="assign-editor-section" style="margin-top:16px;">
+      <h3>指定編輯者</h3>
+      <input type="text" id="editor-seat" placeholder="座號" />
+      <button onclick="assignEditor()">指定編輯者</button>
+    </div>
   </div>
 
+  <script src="assets/script.js"></script>
   <script>
-    // 計算平均分
-    const rows = document.querySelectorAll("#grades-table tbody tr");
-    let total = 0;
-    rows.forEach(row => {
-      const score = parseInt(row.cells[1].textContent);
-      total += score;
-    });
-    const avg = Math.round(total / rows.length);
-    document.getElementById("avg-score").textContent = avg;
+    const seat = localStorage.getItem("seat");
+    let editors = JSON.parse(localStorage.getItem("editors") || "[]");
+    const isAdmin = (seat === "114129");
+    const isEditor = editors.includes(seat);
 
-    // 繪製長條圖
-    const ctx = document.getElementById("chart").getContext("2d");
-    const labels = Array.from(rows).map(row => row.cells[0].textContent);
-    const scores = Array.from(rows).map(row => parseInt(row.cells[1].textContent));
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: '分數',
-          data: scores,
-          backgroundColor: ['#FCA5A5','#FDE68A','#FB7185','#FDBA74','#FCD34D']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: { beginAtZero: true, max: 100 }
-        }
-      }
-    });
+    // 顯示角色提示
+    const roleBox = document.createElement("div");
+    roleBox.style.position = "fixed";
+    roleBox.style.bottom = "16px";
+    roleBox.style.right = "16px";
+    roleBox.style.background = "#FB7185";
+    roleBox.style.color = "white";
+    roleBox.style.padding = "6px 10px";
+    roleBox.style.borderRadius = "6px";
+    roleBox.textContent = isAdmin ? "目前權限：管理員" : 
+                          (isEditor ? "目前權限：編輯者" : "目前權限：查詢者");
+    document.body.appendChild(roleBox);
 
-    // 匯出功能（佔位）
-    function exportCSV() {
-      alert("匯出 CSV 功能尚未啟用");
+    // 控制介面顯示
+    if (!isAdmin) {
+      document.getElementById("add-subject-section").style.display = "none";
+      document.getElementById("assign-editor-section").style.display = "none";
     }
-    function exportPDF() {
-      alert("匯出 PDF 功能尚未啟用");
+
+    // 載入成績
+    let grades = JSON.parse(localStorage.getItem("grades") || "{}");
+    const tbody = document.querySelector("#grades-table tbody");
+    for (let sid in grades) {
+      for (let subject in grades[sid]) {
+        const score = grades[sid][subject];
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${sid}</td>
+          <td>${subject}</td>
+          <td><input type="number" value="${score}" ${(!isAdmin && !isEditor) ? "disabled" : ""}></td>
+          <td><button class="edit-btn" onclick="editGrade('${sid}','${subject}', this.parentElement.parentElement.querySelector('input').value)">更新</button></td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    // 編輯成績
+    function editGrade(seatId, subject, newScore) {
+      if (!isAdmin && !isEditor) {
+        alert("您沒有編輯成績的權限！");
+        return;
+      }
+      grades[seatId][subject] = parseInt(newScore);
+      localStorage.setItem("grades", JSON.stringify(grades));
+      alert("成績已更新！");
+    }
+
+    // 新增科目（只有管理員能用）
+    function addSubject() {
+      if (!isAdmin) {
+        alert("您沒有新增科目的權限！");
+        return;
+      }
+      const subjectName = document.getElementById("new-subject").value.trim();
+      if (!subjectName) return;
+      for (let sid in grades) {
+        grades[sid][subjectName] = 0;
+      }
+      localStorage.setItem("grades", JSON.stringify(grades));
+      alert("科目已新增！");
+      location.reload();
+    }
+
+    // 指定編輯者（只有管理員能用）
+    function assignEditor() {
+      if (!isAdmin) {
+        alert("您沒有指定編輯者的權限！");
+        return;
+      }
+      const editorSeat = document.getElementById("editor-seat").value.trim();
+      if (editorSeat && !editors.includes(editorSeat)) {
+        editors.push(editorSeat);
+        localStorage.setItem("editors", JSON.stringify(editors));
+        alert("已指定座號 " + editorSeat + " 為編輯者！");
+      }
     }
   </script>
 </body>
