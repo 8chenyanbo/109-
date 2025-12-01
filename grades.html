@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>全班成績分析</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <div class="card">
+    <h2>全班成績分析</h2>
+    <table id="grades-table">
+      <thead>
+        <tr>
+          <th>座號</th>
+          <th>考卷 1</th>
+          <th>考卷 2</th>
+          <th>考卷 3</th>
+          <th>平均</th>
+          <th>名次</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const grades = JSON.parse(localStorage.getItem("grades") || "{}");
+    const table = document.querySelector("#grades-table tbody");
+
+    const rows = [];
+    for (let seat in grades) {
+      const papers = grades[seat];
+      const scores = [papers["考卷1"], papers["考卷2"], papers["考卷3"]];
+      const validScores = scores.filter(s => typeof s === "number");
+      const avg = validScores.length ? validScores.reduce((a,b)=>a+b,0)/validScores.length : null;
+      rows.push({ seat, scores, avg });
+    }
+
+    // 排名計算
+    rows.sort((a,b) => (b.avg||0) - (a.avg||0));
+    rows.forEach((row, i) => row.rank = row.avg !== null ? i+1 : "");
+
+    // 顯示表格
+    rows.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row.seat}</td>
+        ${row.scores.map(s => `<td${s<60 ? ' style="color:red;"' : ''}>${s ?? "-"}</td>`).join("")}
+        <td>${row.avg !== null ? row.avg.toFixed(1) : "-"}</td>
+        <td>${row.rank}</td>
+      `;
+      table.appendChild(tr);
+    });
+  </script>
+</body>
+</html>
