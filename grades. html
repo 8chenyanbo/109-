@@ -3,52 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>學生成績頁</title>
+  <title>學生成績查詢</title>
   <link rel="stylesheet" href="assets/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="card">
-    <h2 id="title">學生成績</h2>
-
+    <h2>學生成績</h2>
+    <p>座號：<span id="seat-display">--</span></p>
     <table id="grades-table">
-      <thead>
-        <tr>
-          <th>科目</th>
-          <th>分數</th>
-        </tr>
-      </thead>
+      <thead><tr><th>科目</th><th>分數</th></tr></thead>
       <tbody></tbody>
     </table>
-
-    <p style="text-align:center; font-weight:500;">平均分：<span id="avg-score">--</span></p>
+    <p style="text-align:center;">平均分：<span id="avg-score">--</span></p>
     <canvas id="chart" height="200"></canvas>
   </div>
 
   <script>
     const seat = localStorage.getItem("seat");
+    document.getElementById("seat-display").textContent = seat || "--";
+
     const grades = JSON.parse(localStorage.getItem("grades") || "{}");
     const scores = grades[seat];
 
     if (!scores) {
-      document.getElementById("title").textContent = "找不到座號 " + seat + " 的成績";
+      document.querySelector(".card").innerHTML = `<h2>找不到座號 ${seat} 的成績</h2>`;
     } else {
       const tbody = document.querySelector("#grades-table tbody");
       let total = 0, count = 0;
-
       Object.entries(scores).forEach(([subject, score]) => {
-        const row = `<tr><td>${subject}</td><td>${score}</td></tr>`;
-        tbody.insertAdjacentHTML("beforeend", row);
-        total += score;
-        count++;
+        tbody.innerHTML += `<tr><td>${subject}</td><td>${score}</td></tr>`;
+        total += score; count++;
       });
+      document.getElementById("avg-score").textContent = Math.round(total / count);
 
-      const avg = Math.round(total / count);
-      document.getElementById("avg-score").textContent = avg;
-
-      // 畫圖
-      const ctx = document.getElementById("chart").getContext("2d");
-      new Chart(ctx, {
+      new Chart(document.getElementById("chart"), {
         type: 'bar',
         data: {
           labels: Object.keys(scores),
