@@ -3,49 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>109- 成績系統登入</title>
+  <title>成績系統登入</title>
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
   <div class="card">
-    <h2>109- 成績系統登入</h2>
-    <p style="text-align:center;">請輸入座號（例如：114121 或 114129）</p>
+    <h2>登入成績系統</h2>
 
-    <input type="text" id="seat" placeholder="座號" />
-    <div class="btn-group">
-      <button onclick="login()">登入</button>
+    <label for="seat-input">請輸入座號：</label>
+    <input type="text" id="seat-input" placeholder="例如：114129" />
+
+    <div style="margin-top:12px;">
+      <button onclick="login()">查詢成績</button>
+      <button onclick="goAdmin()">進入管理員介面</button>
     </div>
 
-    <div id="admin-link" style="display:none; text-align:center; margin-top:12px;">
-      <a href="admin.html" style="color:#FB7185; font-weight:bold;">進入管理員介面</a>
-    </div>
+    <p style="margin-top:16px;">目前登入座號：<span id="current-seat">--</span></p>
   </div>
 
-  <script src="assets/script.js"></script>
   <script>
+    // 顯示目前座號
+    document.getElementById("current-seat").textContent = localStorage.getItem("seat") || "--";
+
     function login() {
-      let seat = document.getElementById("seat").value.trim();
-      if (seat.endsWith("-afk")) {
-        seat = seat.replace("-afk", "");
+      const seat = document.getElementById("seat-input").value.trim();
+      if (!seat) {
+        alert("請輸入座號！");
+        return;
       }
+      localStorage.setItem("seat", seat);
+      window.location.href = "./grades.html"; // 修正跳轉路徑
+    }
 
-      const validSeats = [
-        ...Array.from({length: 15}, (_, i) => 114121 + i),
-        ...Array.from({length: 13}, (_, i) => 114291 + i)
-      ];
-      const isAdmin = seat === "114129";
-
-      if (validSeats.includes(Number(seat))) {
-        localStorage.setItem("seat", seat);
-        alert("登入成功！歡迎座號 " + seat);
-        window.location.href = "grades.html";
-      } else if (isAdmin) {
-        localStorage.setItem("seat", seat);
-        alert("管理員登入成功！");
-        document.getElementById("admin-link").style.display = "block";
-      } else {
-        alert("座號錯誤，請洽老師");
+    function goAdmin() {
+      const seat = document.getElementById("seat-input").value.trim();
+      if (!seat) {
+        alert("請輸入座號！");
+        return;
       }
+      localStorage.setItem("seat", seat);
+      window.location.href = "./admin.html"; // 修正跳轉路徑
     }
   </script>
 </body>
