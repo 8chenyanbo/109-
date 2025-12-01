@@ -9,59 +9,43 @@
 <body>
   <div class="card">
     <h2>管理員介面</h2>
-
+    <p>目前座號：<span id="current-seat">--</span></p>
     <table id="grades-table">
-      <thead>
-        <tr>
-          <th>座號</th>
-          <th>科目</th>
-          <th>分數</th>
-          <th>操作</th>
-        </tr>
-      </thead>
+      <thead><tr><th>座號</th><th>科目</th><th>分數</th><th>操作</th></tr></thead>
       <tbody></tbody>
     </table>
 
-    <div id="add-subject-section" style="margin-top:16px;">
-      <h3>新增科目</h3>
-      <input type="text" id="new-subject" placeholder="科目名稱" />
-      <button onclick="addSubject()">新增科目</button>
-    </div>
+    <h3>新增科目</h3>
+    <input type="text" id="new-subject" placeholder="科目名稱" />
+    <button onclick="addSubject()">新增</button>
 
-    <div id="assign-editor-section" style="margin-top:16px;">
-      <h3>指定編輯者</h3>
-      <input type="text" id="editor-seat" placeholder="座號" />
-      <button onclick="assignEditor()">指定編輯者</button>
-    </div>
+    <h3>指定編輯者</h3>
+    <input type="text" id="editor-seat" placeholder="座號" />
+    <button onclick="assignEditor()">指定</button>
+
+    <h3>匯出成績 JSON</h3>
+    <textarea id="backup-json" rows="6" style="width:100%;"></textarea>
+    <button onclick="exportGrades()">匯出</button>
   </div>
 
   <script>
     const seat = localStorage.getItem("seat");
-    let editors = JSON.parse(localStorage.getItem("editors") || "[]");
-    const isAdmin = (seat === "114129");
-    const isEditor = editors.includes(seat);
-
-    // 顯示角色提示
-    const roleBox = document.createElement("div");
-    roleBox.style.position = "fixed";
-    roleBox.style.bottom = "16px";
-    roleBox.style.right = "16px";
-    roleBox.style.background = "#FB7185";
-    roleBox.style.color = "white";
-    roleBox.style.padding = "6px 10px";
-    roleBox.style.borderRadius = "6px";
-    roleBox.textContent = isAdmin ? "目前權限：管理員" : 
-                          (isEditor ? "目前權限：編輯者" : "目前權限：查詢者");
-    document.body.appendChild(roleBox);
-
-    if (!isAdmin) {
-      document.getElementById("add-subject-section").style.display = "none";
-      document.getElementById("assign-editor-section").style.display = "none";
-    }
+    document.getElementById("current-seat").textContent = seat || "--";
 
     let grades = JSON.parse(localStorage.getItem("grades") || "{}");
-    const tbody = document.querySelector("#grades-table tbody");
+    let editors = JSON.parse(localStorage.getItem("editors") || "[]");
+    const isAdmin = seat === "114129";
+    const isEditor = editors.includes(seat);
 
+    if (!localStorage.getItem("grades")) {
+      localStorage.setItem("grades", JSON.stringify({
+        "114121": { "國文": 80, "英文": 75, "數學": 88 },
+        "114129": { "國文": 92, "英文": 95, "數學": 98 }
+      }));
+      grades = JSON.parse(localStorage.getItem("grades"));
+    }
+
+    const tbody = document.querySelector("#grades-table tbody");
     for (let sid in grades) {
       for (let subject in grades[sid]) {
         const score = grades[sid][subject];
@@ -70,48 +54,44 @@
           <td>${sid}</td>
           <td>${subject}</td>
           <td><input type="number" value="${score}" ${(!isAdmin && !isEditor) ? "disabled" : ""}></td>
-          <td><button class="edit-btn" onclick="editGrade('${sid}','${subject}', this.parentElement.parentElement.querySelector('input').value)">更新</button></td>
+          <td><button onclick="editGrade('${sid}','${subject}', this.parentElement.parentElement.querySelector('input').value)">更新</button></td>
         `;
         tbody.appendChild(row);
       }
     }
 
-    function editGrade(seatId, subject, newScore) {
-      if (!isAdmin && !isEditor) {
-        alert("您沒有編輯成績的權限！");
-        return;
-      }
-      grades[seatId][subject] = parseInt(newScore);
+    function editGrade(sid, subject, score) {
+      if (!isAdmin && !isEditor) return alert("無權限！");
+      grades[sid][subject] = parseInt(score);
       localStorage.setItem("grades", JSON.stringify(grades));
-      alert("成績已更新！");
+      alert("已更新！");
     }
 
     function addSubject() {
-      if (!isAdmin) {
-        alert("您沒有新增科目的權限！");
-        return;
-      }
-      const subjectName = document.getElementById("new-subject").value.trim();
-      if (!subjectName) return;
+      if (!isAdmin) return alert("無權限！");
+      const subject = document.getElementById("new-subject").value.trim();
+      if (!subject) return;
       for (let sid in grades) {
-        grades[sid][subjectName] = 0;
+        if (grades[sid][subject] === undefined) {
+          grades[sid][subject] = 0;
+        }
       }
       localStorage.setItem("grades", JSON.stringify(grades));
-      alert("科目已新增！");
       location.reload();
     }
 
     function assignEditor() {
-      if (!isAdmin) {
-        alert("您沒有指定編輯者的權限！");
-        return;
-      }
-      const editorSeat = document.getElementById("editor-seat").value.trim();
-      if (editorSeat && !editors.includes(editorSeat)) {
-        editors.push(editorSeat);
+      if (!isAdmin) return alert("無權限！");
+      const editor = document.getElementById("editor-seat").value.trim();
+      if (editor && !editors.includes(editor)) {
+        editors.push(editor);
         localStorage.setItem("editors", JSON.stringify(editors));
-        alert("已指定座號 " + editorSeat + " 為編輯者！");
+        alert("已指定編輯者：" + editor);
       }
+    }
+
+    function exportGrades() {
+      document.getElementById("backup-json").value = localStorage.getItem("grades") || "{}";
     }
   </script>
 </body>
